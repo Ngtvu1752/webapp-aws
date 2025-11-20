@@ -1,0 +1,34 @@
+version: "3.8"
+
+services:
+  # --- MySQL Server ---
+  db_mysql:
+    image: mysql:8.0
+    container_name: mysql_server
+    restart: always
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: admin
+      MYSQL_DATABASE: inventorydb
+      MYSQL_USER: user
+      MYSQL_PASSWORD: admin
+    ports:
+      - "3306:3306" # Map port 3306 của container ra máy thật
+    volumes:
+      - mysql_data:/var/lib/mysql # Giữ dữ liệu không bị mất khi xóa container
+
+  # --- Giao diện quản lý (phpMyAdmin) ---
+  phpmyadmin:
+    image: phpmyadmin
+    container_name: payment_phpmyadmin
+    restart: always
+    depends_on:
+      - db_mysql
+    ports:
+      - "8080:80" # Truy cập tại http://localhost:8080
+    environment:
+      PMA_HOST: db_mysql # Tên service mysql ở trên
+      MYSQL_ROOT_PASSWORD: admin
+
+volumes:
+  mysql_data: # Khai báo volume
