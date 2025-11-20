@@ -1,18 +1,24 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
-import LoginPage from './components/LoginPage';
-import Dashboard from './components/Dashboard';
-import ProductManagement from './components/ProductManagement';
-import WarehouseManagement from './components/WarehouseManagement';
-import InventoryView from './components/InventoryView';
-import OrderCreation from './components/OrderCreation';
-import Layout from './components/Layout';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import { useEffect, useState } from "react";
+import LoginPage from "./components/LoginPage";
+import Dashboard from "./components/Dashboard";
+import ProductManagement from "./components/ProductManagement";
+import WarehouseManagement from "./components/WarehouseManagement";
+import InventoryView from "./components/InventoryView";
+import OrderCreation from "./components/OrderCreation";
+import Layout from "./components/Layout";
+import "./amplifyConfig";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem("authToken");
     setIsAuthenticated(!!token);
   }, []);
 
@@ -21,19 +27,23 @@ function App() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('currentUser');
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("currentUser");
     setIsAuthenticated(false);
   };
 
   return (
     <Router>
       <Routes>
-        <Route 
-          path="/login" 
+        <Route
+          path="/login"
           element={
-            isAuthenticated ? <Navigate to="/dashboard" /> : <LoginPage onLogin={handleLogin} />
-          } 
+            isAuthenticated ? (
+              <Navigate to="/dashboard" />
+            ) : (
+              <LoginPage onLogin={handleLogin} />
+            )
+          }
         />
         <Route
           path="/*"

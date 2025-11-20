@@ -1,37 +1,56 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Package } from 'lucide-react';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { signIn, fetchAuthSession } from "aws-amplify/auth";
+
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "./ui/card";
+import { Package } from "lucide-react";
 
 interface LoginPageProps {
   onLogin: () => void;
 }
 
 export default function LoginPage({ onLogin }: LoginPageProps) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
+    setLoading(true);
 
-    // Mock authentication - in production, this would call your auth API
-    if (username === 'admin' && password === 'admin') {
-      const mockToken = 'mock-jwt-token-' + Date.now();
-      const user = { username, fullName: 'Admin User', role: 'admin' };
-      
-      localStorage.setItem('authToken', mockToken);
-      localStorage.setItem('currentUser', JSON.stringify(user));
-      
+    try {
+      // --- Step 1: sign in ---
+      await signIn({ username, password });
+
+      // --- Step 2: fetch tokens from session ---
+      const session = await fetchAuthSession();
+      const idToken = session.tokens?.idToken?.toString();
+      const accessToken = session.tokens?.accessToken?.toString();
+
+      if (idToken) localStorage.setItem("idToken", idToken);
+      if (accessToken) localStorage.setItem("accessToken", accessToken);
+
+      // refreshToken KHÔNG tồn tại trong Amplify v6+ nên không thể lưu
+
       onLogin();
-      navigate('/dashboard');
-    } else {
-      setError('Invalid username or password');
+      navigate("/dashboard");
+    } catch (err: any) {
+      console.error("Login error:", err);
+      setError(err.message || "Authentication failed");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -44,44 +63,42 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
               <Package className="h-8 w-8 text-white" />
             </div>
           </div>
-          <CardTitle className="text-center">Warehouse Management System</CardTitle>
+          <CardTitle className="text-center">
+            Warehouse Management System
+          </CardTitle>
           <CardDescription className="text-center">
             Sign in to access your warehouse dashboard
           </CardDescription>
         </CardHeader>
+
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
+            <div>
               <Label htmlFor="username">Username</Label>
               <Input
                 id="username"
-                type="text"
-                placeholder="Enter your username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
               />
             </div>
-            <div className="space-y-2">
+
+            <div>
               <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
             </div>
-            {error && (
-              <div className="text-red-500 text-sm">{error}</div>
-            )}
-            <Button type="submit" className="w-full">
-              Sign In
+
+            {error && <div className="text-red-500 text-sm">{error}</div>}
+
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Signing in..." : "Sign In"}
             </Button>
-            <div className="text-sm text-gray-500 text-center">
-              Demo: username: <span className="font-mono">admin</span>, password: <span className="font-mono">admin</span>
-            </div>
           </form>
         </CardContent>
       </Card>
